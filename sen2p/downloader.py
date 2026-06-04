@@ -79,9 +79,22 @@ class Sentinel2Downloader:
         footprint = f"POINT({lon} {lat})"
 
         try:
+            # Convert string dates to datetime for CDSE API compatibility
+            from datetime import datetime
+
+            if isinstance(start_date, str):
+                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            else:
+                start_dt = start_date
+
+            if isinstance(end_date, str):
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            else:
+                end_dt = end_date
+
             products = self.api.query(
                 footprint,
-                date=(start_date, end_date),
+                date=(start_dt, end_dt),
                 platformname=platform,
                 producttype=producttype,
                 cloudcoverpercentage=(0, cloud_max),
