@@ -1,0 +1,186 @@
+================================================================================
+                                   sen2p
+           Sentinel-2 Satellite Imagery Downloader for Python
+================================================================================
+
+Version: 0.1.0
+License: MIT
+Python: 3.10+
+Package Manager: uv (recommended) or pip
+
+================================================================================
+QUICK START
+================================================================================
+
+1. Install:
+   uv add sen2p
+
+2. Set credentials:
+   export COPERNICUS_USER="your_username"
+   export COPERNICUS_PASSWORD="your_password"
+
+3. Download:
+   from sen2p import download
+   
+   results = download(
+       start_date="2024-01-01",
+       end_date="2024-01-31",
+       location=[172.1, -43.5],
+       output_dir="data",
+       cloud_max=20
+   )
+
+================================================================================
+PROJECT FILES
+================================================================================
+
+Core Package:
+  sen2p/__init__.py         - Public API exports
+  sen2p/downloader.py       - Download functionality
+
+Documentation (13 files):
+  README.md                 - Complete documentation
+  QUICKSTART.md             - 5-minute setup guide
+  INTEGRATION.md            - Workflows with rasteric
+  SENTINEL2_REFERENCE.md    - Band specifications
+  FAQ.md                    - Frequently asked questions
+  CONTRIBUTING.md           - Contribution guidelines
+  DEVELOPER_GUIDE.md        - Development guide
+  PROJECT_STRUCTURE.md      - Project architecture
+  SUMMARY.md                - Project overview
+  CHANGELOG.md              - Version history
+  PUBLISHING.md             - Release guide
+  DOCUMENTATION_INDEX.md    - Documentation map
+  LICENSE                   - MIT License
+
+Examples (3 files):
+  main.py                   - Demo script
+  example.py                - Usage examples
+  test_import.py            - Import verification
+
+Configuration:
+  pyproject.toml            - Package configuration
+  .env.example              - Credentials template
+  .gitignore                - Git ignore rules
+  uv.lock                   - Dependency lock file
+
+================================================================================
+KEY FEATURES
+================================================================================
+
+✓ Simple API - One function with sensible defaults
+✓ Cloud filtering - Filter images by cloud coverage
+✓ Free data - Access entire Sentinel-2 archive
+✓ rasteric integration - Seamless processing workflow
+✓ Type hints - Full type annotation support
+✓ Comprehensive docs - 13 documentation files
+
+================================================================================
+DESIGN PHILOSOPHY
+================================================================================
+
+Single Responsibility: sen2p downloads, rasteric processes
+Simple API: One main function, clear purpose
+Clean Separation: Clear boundaries between download and processing
+
+================================================================================
+WORKFLOW
+================================================================================
+
+1. sen2p downloads Sentinel-2 imagery
+   ↓
+2. rasteric processes imagery
+   - Band extraction
+   - NDVI calculation
+   - Mosaicking
+   - Analysis
+
+================================================================================
+DEPENDENCIES
+================================================================================
+
+Runtime:
+  - sentinelsat >= 1.2.1
+  - requests >= 2.34.2
+
+Development (optional):
+  - mypy (type checking)
+  - ruff (linting)
+  - pytest (testing)
+
+================================================================================
+GETTING HELP
+================================================================================
+
+1. Quick start: QUICKSTART.md
+2. Full docs: README.md
+3. Workflows: INTEGRATION.md
+4. Band info: SENTINEL2_REFERENCE.md
+5. Problems: FAQ.md
+6. Examples: example.py
+7. Run demo: uv run main.py
+
+================================================================================
+CONTRIBUTING
+================================================================================
+
+See CONTRIBUTING.md for:
+  - Development setup
+  - Code guidelines
+  - Project structure
+
+See DEVELOPER_GUIDE.md for:
+  - Architecture details
+  - Debugging tips
+  - Release process
+
+================================================================================
+RESOURCES
+================================================================================
+
+Register: https://scihub.copernicus.eu/dhus/#/self-registration
+Sentinel-2: https://sentinels.copernicus.eu/web/sentinel/missions/sentinel-2
+sentinelsat: https://sentinelsat.readthedocs.io/
+
+================================================================================
+STATISTICS
+================================================================================
+
+Code Files: 2 Python modules
+Documentation: 13 markdown files
+Examples: 3 scripts
+Total Lines: ~2000 (including docs)
+Test Coverage: Import verification
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+For Users:
+  1. Read QUICKSTART.md
+  2. Run uv run main.py
+  3. Try example.py
+  4. Build your workflow
+
+For Contributors:
+  1. Read CONTRIBUTING.md
+  2. Review DEVELOPER_GUIDE.md
+  3. Check PROJECT_STRUCTURE.md
+  4. Start coding!
+
+================================================================================
+COMPANION LIBRARY
+================================================================================
+
+rasteric - Processing and analysis library for satellite imagery
+  • Band extraction
+  • NDVI calculation
+  • Mosaicking
+  • Composites
+  • Analysis tools
+
+Together: Complete satellite imagery workflow
+
+================================================================================
+
+Built with ❤️ for the remote sensing community
