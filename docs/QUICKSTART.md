@@ -15,12 +15,23 @@ pip install sen2p
 
 ## 2. Get Copernicus Credentials
 
-1. Register (free): https://scihub.copernicus.eu/dhus/#/self-registration
-2. Confirm your email
-3. Set environment variables:
+⚠️ **Important Update:** The old portal (`scihub.copernicus.eu`) shut down in October 2023.
+
+1. **Register** (free) at the new portal: **https://dataspace.copernicus.eu**
+2. Click **REGISTER** in the top right
+3. Fill in: name, email, password
+4. Accept terms and click **REGISTER**
+5. **Verify your email** (check spam folder!)
+6. Set environment variables:
 
 ```bash
-export COPERNICUS_USER="your_username"
+export CDSE_USER="your_email@example.com"
+export CDSE_PASSWORD="your_password"
+```
+
+Alternative variable names (also supported):
+```bash
+export COPERNICUS_USER="your_email@example.com"
 export COPERNICUS_PASSWORD="your_password"
 ```
 
@@ -34,7 +45,7 @@ results = download(
     end_date="2024-01-31",
     location=[172.1, -43.5],  # [longitude, latitude]
     output_dir="data",
-    cloud_max=20
+    cloud_max=20,
 )
 
 print(f"Downloaded {len(results)} images")
@@ -49,8 +60,8 @@ from rasteric import raster
 raster.ndvi(
     results[0]["path"],
     "ndvi.tif",
-    red_band=4,   # Band 4 = Red
-    nir_band=8    # Band 8 = NIR
+    red_band=4,  # Band 4 = Red
+    nir_band=8,  # Band 8 = NIR
 )
 ```
 

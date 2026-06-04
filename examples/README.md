@@ -36,21 +36,31 @@ uv run examples/basic.py
 
 ## Before Running
 
-1. **Register** at Copernicus Hub:  
-   https://scihub.copernicus.eu/dhus/#/self-registration
+⚠️ **Important:** Old portal (`scihub.copernicus.eu`) shut down in October 2023.
 
-2. **Confirm your email** (check spam folder)
+1. **Register** at NEW portal:  
+   **https://dataspace.copernicus.eu**
 
-3. **Set credentials:**
+2. Click **REGISTER** and fill the form
+
+3. **Verify your email** (check spam folder)
+
+4. **Set credentials:**
    ```bash
-   export COPERNICUS_USER="your_username"
-   export COPERNICUS_PASSWORD="your_password"
+   export CDSE_USER="your_email@example.com"
+   export CDSE_PASSWORD="your_password"
    ```
 
    Or create a `.env` file in the project root:
    ```
-   COPERNICUS_USER=your_username
-   COPERNICUS_PASSWORD=your_password
+   CDSE_USER=your_email@example.com
+   CDSE_PASSWORD=your_password
+   ```
+
+   Alternative variable names (also supported):
+   ```bash
+   export COPERNICUS_USER="your_email@example.com"
+   export COPERNICUS_PASSWORD="your_password"
    ```
 
 ## Creating Your Own Examples
@@ -64,7 +74,7 @@ results = download(
     end_date="2024-01-31",
     location=[172.1, -43.5],  # [longitude, latitude]
     output_dir="data",
-    cloud_max=20
+    cloud_max=20,
 )
 
 # Use the results
@@ -89,7 +99,7 @@ results = download(
     end_date=end.isoformat(),
     location=[172.1, -43.5],
     output_dir="timeseries",
-    cloud_max=15
+    cloud_max=15,
 )
 ```
 
@@ -106,7 +116,7 @@ for name, coords in locations.items():
         end_date="2024-01-31",
         location=coords,
         output_dir=f"data/{name}",
-        cloud_max=20
+        cloud_max=20,
     )
 ```
 
@@ -121,17 +131,12 @@ results = download(
     end_date="2024-06-30",
     location=[172.1, -43.5],
     output_dir="data",
-    cloud_max=20
+    cloud_max=20,
 )
 
 # Process each scene
 for result in results:
-    raster.ndvi(
-        result["path"],
-        f"ndvi_{result['id']}.tif",
-        red_band=4,
-        nir_band=8
-    )
+    raster.ndvi(result["path"], f"ndvi_{result['id']}.tif", red_band=4, nir_band=8)
 ```
 
 ## Need More Help?

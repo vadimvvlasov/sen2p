@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING:** Migrated to Copernicus Data Space Ecosystem (CDSE)
+  - Old portal (scihub.copernicus.eu) shut down October 2023
+  - New API endpoint: catalogue.dataspace.copernicus.eu
+  - Now accepts email as username (required by CDSE)
+  - Environment variables: Support both CDSE_* and COPERNICUS_* names
+  - See MIGRATION_CDSE.md for migration guide
+
+### Added
+- Support for CDSE_USER and CDSE_PASSWORD environment variables
+- Automatic fallback to COPERNICUS_USER/PASSWORD (backward compatibility)
+- Migration guide (docs/MIGRATION_CDSE.md)
+- Clear error messages for credential setup
+
+### Fixed
+- Updated all documentation with new registration URL
+- Updated examples with new credentials format
+
 ## [0.1.0] - 2026-06-04
 
 ### Added

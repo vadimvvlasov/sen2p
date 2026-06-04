@@ -19,16 +19,11 @@ results = download(
     location=[172.1, -43.5],
     bands=["red", "nir"],
     output_dir="data",
-    cloud_max=20
+    cloud_max=20,
 )
 
 # Process with rasteric
-raster.ndvi(
-    results[0]["path"],
-    "ndvi.tif",
-    red_band=1,
-    nir_band=2
-)
+raster.ndvi(results[0]["path"], "ndvi.tif", red_band=1, nir_band=2)
 ```
 
 Two libraries. Clean separation. Full workflow.
@@ -56,13 +51,23 @@ pip install sen2p
 
 ## Setup
 
-You need a free Copernicus Open Access Hub account:
+⚠️ **Important:** The old Copernicus Open Access Hub (`scihub.copernicus.eu`) was shut down in October 2023.
 
-1. Register at [https://scihub.copernicus.eu/dhus/#/self-registration](https://scihub.copernicus.eu/dhus/#/self-registration)
-2. Set your credentials:
+You need a free **Copernicus Data Space Ecosystem (CDSE)** account:
+
+1. Register at **[https://dataspace.copernicus.eu](https://dataspace.copernicus.eu)**
+2. Click **REGISTER** and fill in the form
+3. **Verify your email** (check spam folder)
+4. Set your credentials:
 
 ```bash
-export COPERNICUS_USER="your_username"
+export CDSE_USER="your_email@example.com"
+export CDSE_PASSWORD="your_password"
+```
+
+Or use the old variable names (also supported):
+```bash
+export COPERNICUS_USER="your_email@example.com"
 export COPERNICUS_PASSWORD="your_password"
 ```
 
@@ -80,7 +85,7 @@ results = download(
     end_date="2024-01-31",
     location=[172.1, -43.5],  # [longitude, latitude]
     output_dir="sentinel_data",
-    cloud_max=20  # Max 20% cloud coverage
+    cloud_max=20,  # Max 20% cloud coverage
 )
 
 print(f"Downloaded {len(results)} products")
@@ -97,7 +102,7 @@ results = download(
     location=[172.1, -43.5],
     output_dir="data",
     username="your_username",
-    password="your_password"
+    password="your_password",
 )
 ```
 
@@ -111,7 +116,7 @@ results = download(
     location=[172.1, -43.5],
     output_dir="data",
     cloud_max=10,
-    max_products=3
+    max_products=3,
 )
 ```
 
@@ -124,7 +129,7 @@ results = download(
     end_date="2024-01-31",
     location=[172.1, -43.5],
     output_dir="data",
-    producttype="S2MSI2A"  # Default
+    producttype="S2MSI2A",  # Default
 )
 
 # Level-1C (top-of-atmosphere)
@@ -133,7 +138,7 @@ results = download(
     end_date="2024-01-31",
     location=[172.1, -43.5],
     output_dir="data",
-    producttype="S2MSI1C"
+    producttype="S2MSI1C",
 )
 ```
 

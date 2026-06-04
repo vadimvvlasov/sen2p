@@ -10,10 +10,12 @@ def main():
     Demo script for sen2p
 
     Before running:
-    1. Register at https://scihub.copernicus.eu/dhus/#/self-registration
+    1. Register at https://dataspace.copernicus.eu (NEW portal!)
     2. Set environment variables:
-       export COPERNICUS_USER="your_username"
-       export COPERNICUS_PASSWORD="your_password"
+       export CDSE_USER="your_email@example.com"
+       export CDSE_PASSWORD="your_password"
+
+    Note: Old portal (scihub.copernicus.eu) shut down in October 2023.
     """
 
     print("=" * 60)
@@ -62,12 +64,18 @@ def main():
     except ValueError as e:
         print(f"✗ Configuration error: {e}")
         print()
-        print("Make sure to set your Copernicus credentials:")
-        print("  export COPERNICUS_USER='your_username'")
-        print("  export COPERNICUS_PASSWORD='your_password'")
+        print("⚠️  IMPORTANT: Old portal shut down in October 2023!")
         print()
-        print("Or register at:")
-        print("  https://scihub.copernicus.eu/dhus/#/self-registration")
+        print("Register at NEW portal:")
+        print("  https://dataspace.copernicus.eu")
+        print()
+        print("Then set credentials:")
+        print("  export CDSE_USER='your_email@example.com'")
+        print("  export CDSE_PASSWORD='your_password'")
+        print()
+        print("Alternative variable names also work:")
+        print("  export COPERNICUS_USER='your_email@example.com'")
+        print("  export COPERNICUS_PASSWORD='your_password'")
     except RuntimeError as e:
         print(f"✗ Download error: {e}")
     except Exception as e:

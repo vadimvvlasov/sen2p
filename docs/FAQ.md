@@ -12,7 +12,13 @@ Yes! sen2p is open source (MIT license) and the Sentinel-2 data is free from Cop
 
 ### Do I need a Copernicus account?
 
-Yes, you need a free account to download data. Register at: https://scihub.copernicus.eu/dhus/#/self-registration
+Yes, you need a free account to download data. 
+
+⚠️ **Important Update:** The old portal (`scihub.copernicus.eu`) was shut down in October 2023.
+
+Register at the **NEW portal**: **https://dataspace.copernicus.eu**
+
+See [MIGRATION_CDSE.md](MIGRATION_CDSE.md) for details.
 
 ### What's the difference between sen2p and sentinelsat?
 
@@ -39,14 +45,21 @@ Python 3.10 or higher.
 
 ### How do I set up credentials?
 
+⚠️ **Use the NEW portal** (old one shut down October 2023)
+
 ```bash
-export COPERNICUS_USER="your_username"
+# New variable names (recommended):
+export CDSE_USER="your_email@example.com"
+export CDSE_PASSWORD="your_password"
+
+# Alternative (also supported):
+export COPERNICUS_USER="your_email@example.com"
 export COPERNICUS_PASSWORD="your_password"
 ```
 
 Or pass them directly to `download()`:
 ```python
-download(..., username="user", password="pass")
+download(..., username="your_email@example.com", password="pass")
 ```
 
 ### Can I use a .env file?
@@ -60,9 +73,11 @@ COPERNICUS_PASSWORD=your_password
 Then load it in your code:
 ```python
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from sen2p import download
+
 results = download(...)  # Will use env vars
 ```
 
@@ -77,7 +92,7 @@ results = download(
     start_date="2024-01-01",
     end_date="2024-01-31",
     location=[172.1, -43.5],  # [longitude, latitude]
-    output_dir="data"
+    output_dir="data",
 )
 ```
 
@@ -94,7 +109,7 @@ Try:
 ```python
 results = download(
     ...,
-    cloud_max=20  # Maximum 20% clouds
+    cloud_max=20,  # Maximum 20% clouds
 )
 ```
 
@@ -120,7 +135,7 @@ results = download(..., producttype="S2MSI1C")
 ```python
 results = download(
     ...,
-    max_products=3  # Download only 3 best matches
+    max_products=3,  # Download only 3 best matches
 )
 ```
 
@@ -142,7 +157,7 @@ results = download(...)
 raster.extract_bands(
     results[0]["path"],
     bands=[4, 8],  # Red and NIR
-    output_dir="bands"
+    output_dir="bands",
 )
 ```
 
@@ -159,8 +174,8 @@ results = download(...)
 raster.ndvi(
     results[0]["path"],
     "ndvi.tif",
-    red_band=4,   # Band 4 = Red
-    nir_band=8    # Band 8 = NIR
+    red_band=4,  # Band 4 = Red
+    nir_band=8,  # Band 8 = NIR
 )
 ```
 
@@ -187,17 +202,12 @@ results = download(
     end_date="2024-01-31",
     location=[172.1, -43.5],
     output_dir="data",
-    cloud_max=20
+    cloud_max=20,
 )
 
 # Process immediately
 for result in results:
-    raster.ndvi(
-        result["path"],
-        f"ndvi_{result['id']}.tif",
-        red_band=4,
-        nir_band=8
-    )
+    raster.ndvi(result["path"], f"ndvi_{result['id']}.tif", red_band=4, nir_band=8)
 ```
 
 ## Errors & Troubleshooting
@@ -212,11 +222,21 @@ Solutions:
 
 ### "Invalid credentials"
 
-Check:
-- Username and password are correct
-- Email is confirmed (check spam folder)
-- Environment variables are set correctly
-- No typos in credentials
+⚠️ **Common issue after October 2023 migration**
+
+The old portal (`scihub.copernicus.eu`) shut down. You need:
+
+1. **New account** at https://dataspace.copernicus.eu
+2. Use your **email address** as username (not a username)
+3. Set new credentials:
+   ```bash
+   export CDSE_USER="your_email@example.com"
+   export CDSE_PASSWORD="your_password"
+   ```
+
+See [MIGRATION_CDSE.md](MIGRATION_CDSE.md) for full migration guide.
+
+Old credentials **cannot be migrated** - you must register new account.
 
 ### "Download failed"
 
@@ -296,7 +316,7 @@ for loc in locations:
         start_date="2024-01-01",
         end_date="2024-01-31",
         location=loc,
-        output_dir=f"data_{loc[0]}_{loc[1]}"
+        output_dir=f"data_{loc[0]}_{loc[1]}",
     )
 ```
 

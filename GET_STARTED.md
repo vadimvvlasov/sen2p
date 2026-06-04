@@ -10,12 +10,14 @@ uv add sen2p
 
 ## 2. Get Credentials
 
-Register (free): https://scihub.copernicus.eu/dhus/#/self-registration
+⚠️ **New portal** (old one shut down in October 2023)
+
+Register (free): **https://dataspace.copernicus.eu**
 
 Set environment variables:
 ```bash
-export COPERNICUS_USER="your_username"
-export COPERNICUS_PASSWORD="your_password"
+export CDSE_USER="your_email@example.com"
+export CDSE_PASSWORD="your_password"
 ```
 
 ## 3. Download

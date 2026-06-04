@@ -4,45 +4,61 @@ Core download functionality for Sentinel-2 imagery
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sentinelsat import SentinelAPI
 from sentinelsat.sentinel import SentinelAPIError
 
 
 class Sentinel2Downloader:
-    """Handler for downloading Sentinel-2 imagery from Copernicus Open Access Hub"""
+    """Handler for downloading Sentinel-2 imagery from Copernicus Data Space Ecosystem"""
 
-    def __init__(self, username: Optional[str] = None, password: Optional[str] = None):
+    def __init__(self, username: str | None = None, password: str | None = None):
         """
-        Initialize the downloader with Copernicus credentials.
+        Initialize the downloader with Copernicus Data Space credentials.
 
         Args:
-            username: Copernicus Open Access Hub username (or set COPERNICUS_USER env var)
-            password: Copernicus Open Access Hub password (or set COPERNICUS_PASSWORD env var)
+            username: CDSE username/email (or set COPERNICUS_USER or CDSE_USER env var)
+            password: CDSE password (or set COPERNICUS_PASSWORD or CDSE_PASSWORD env var)
+
+        Note:
+            The old Copernicus Open Access Hub (scihub.copernicus.eu) was shut down
+            in October 2023. This library now uses the new Copernicus Data Space
+            Ecosystem (CDSE). Register at: https://dataspace.copernicus.eu
         """
-        self.username = username or os.getenv("COPERNICUS_USER")
-        self.password = password or os.getenv("COPERNICUS_PASSWORD")
+        # Try new CDSE environment variables first, fall back to old names
+        self.username = (
+            username or os.getenv("CDSE_USER") or os.getenv("COPERNICUS_USER")
+        )
+        self.password = (
+            password or os.getenv("CDSE_PASSWORD") or os.getenv("COPERNICUS_PASSWORD")
+        )
 
         if not self.username or not self.password:
             raise ValueError(
-                "Copernicus credentials required. Provide username/password or set "
-                "COPERNICUS_USER and COPERNICUS_PASSWORD environment variables."
+                "Copernicus Data Space credentials required. "
+                "Register at https://dataspace.copernicus.eu and set:\n"
+                "  CDSE_USER (or COPERNICUS_USER) = your email\n"
+                "  CDSE_PASSWORD (or COPERNICUS_PASSWORD) = your password\n"
+                "Or pass username/password directly to download()."
             )
 
+        # Use new Copernicus Data Space Ecosystem endpoint
         self.api = SentinelAPI(
-            self.username, self.password, "https://scihub.copernicus.eu/dhus"
+            self.username,
+            self.password,
+            "https://catalogue.dataspace.copernicus.eu/odata/v1",
         )
 
     def search(
         self,
-        location: Tuple[float, float],
+        location: tuple[float, float],
         start_date: str,
         end_date: str,
         cloud_max: int = 30,
         platform: str = "Sentinel-2",
         producttype: str = "S2MSI1C",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Search for Sentinel-2 products.
 
@@ -76,10 +92,10 @@ class Sentinel2Downloader:
 
     def download_products(
         self,
-        products: Dict[str, Any],
+        products: dict[str, Any],
         output_dir: str,
-        max_products: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+        max_products: int | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Download the specified products.
 
@@ -107,16 +123,14 @@ class Sentinel2Downloader:
                     product_id, directory_path=str(output_path)
                 )
 
-                results.append(
-                    {
-                        "id": product_id,
-                        "title": product_info["title"],
-                        "path": product_path["path"],
-                        "size": product_info.get("size"),
-                        "cloud_cover": product_info.get("cloudcoverpercentage"),
-                        "date": product_info.get("beginposition"),
-                    }
-                )
+                results.append({
+                    "id": product_id,
+                    "title": product_info["title"],
+                    "path": product_path["path"],
+                    "size": product_info.get("size"),
+                    "cloud_cover": product_info.get("cloudcoverpercentage"),
+                    "date": product_info.get("beginposition"),
+                })
             except Exception as e:
                 print(f"Failed to download {product_id}: {e}")
                 continue
@@ -127,17 +141,23 @@ class Sentinel2Downloader:
 def download(
     start_date: str,
     end_date: str,
-    location: Tuple[float, float],
-    bands: Optional[List[str]] = None,
+    location: tuple[float, float],
+    bands: list[str] | None = None,
     output_dir: str = "data",
     cloud_max: int = 30,
-    max_products: Optional[int] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
+    max_products: int | None = None,
+    username: str | None = None,
+    password: str | None = None,
     producttype: str = "S2MSI2A",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Download Sentinel-2 imagery for a specified location and date range.
+
+    Note:
+        This library uses the new Copernicus Data Space Ecosystem (CDSE).
+        Register at https://dataspace.copernicus.eu
+
+        The old Copernicus Open Access Hub (scihub.copernicus.eu) shut down in October 2023.
 
     Args:
         start_date: Start date in format "YYYY-MM-DD"
@@ -148,8 +168,8 @@ def download(
         output_dir: Directory to save downloaded files
         cloud_max: Maximum cloud coverage percentage (0-100)
         max_products: Maximum number of products to download
-        username: Copernicus username (optional if env var set)
-        password: Copernicus password (optional if env var set)
+        username: CDSE username/email (optional if env var set)
+        password: CDSE password (optional if env var set)
         producttype: Product type - "S2MSI1C" (Level-1C) or "S2MSI2A" (Level-2A, default)
 
     Returns:
@@ -160,6 +180,7 @@ def download(
         - size: File size
         - cloud_cover: Cloud coverage percentage
         - date: Acquisition date
+        - requested_bands: Band names (for reference)
 
     Example:
         >>> results = download(
@@ -168,7 +189,7 @@ def download(
         ...     location=[172.1, -43.5],
         ...     bands=["red", "nir"],
         ...     output_dir="data",
-        ...     cloud_max=20
+        ...     cloud_max=20,
         ... )
         >>> print(f"Downloaded {len(results)} products")
     """
