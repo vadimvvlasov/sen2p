@@ -1,80 +1,103 @@
 # sen2p Examples
 
-Example scripts demonstrating how to use sen2p.
+Example scripts demonstrating sen2p usage with the native CDSE API.
 
 ## Available Examples
 
-### demo.py
-**Quick demo script** - Shows basic download with error handling.
+### basic.py ✅ **Recommended**
+
+**Native CDSE implementation** - Shows the working approach.
 
 ```bash
-# Set your credentials first
-export COPERNICUS_USER="your_username"
-export COPERNICUS_PASSWORD="your_password"
-
-# Run the demo
-uv run examples/demo.py
+uv run python examples/basic.py
 ```
 
-**What it does:**
-- Downloads one Sentinel-2 image for Christchurch, NZ
-- Shows cloud coverage and metadata
-- Demonstrates error handling
-- Provides next steps
-
-### basic.py
-**Multiple usage examples** - Various use cases and patterns.
-
-```bash
-uv run examples/basic.py
-```
-
-**Includes:**
-- Basic download
-- Download with explicit credentials
+**What it includes:**
+- Using `CDSEDownloader` class
+- OAuth2 authentication (automatic)
+- Searching for products
+- Downloading imagery
 - Integration with rasteric (pseudo-code)
+
+**This example works reliably with CDSE.**
+
+---
+
+### demo.py ⚠️ **Legacy**
+
+**Old sentinelsat-based example** - May not work due to CDSE migration.
+
+Uses the old `download()` function which may return 403 Forbidden errors.
+
+For working examples, **use basic.py instead**.
+
+---
 
 ## Before Running
 
 ⚠️ **Important:** Old portal (`scihub.copernicus.eu`) shut down in October 2023.
 
-1. **Register** at NEW portal:  
-   **https://dataspace.copernicus.eu**
+### 1. Register at CDSE
 
-2. Click **REGISTER** and fill the form
+**Register** at the NEW portal:  
+**https://dataspace.copernicus.eu**
 
-3. **Verify your email** (check spam folder)
+1. Click **REGISTER** and fill the form
+2. **Verify your email** (check spam folder!)
 
-4. **Set credentials:**
-   ```bash
-   export CDSE_USER="your_email@example.com"
-   export CDSE_PASSWORD="your_password"
-   ```
+### 2. Set Credentials
 
-   Or create a `.env` file in the project root:
-   ```
-   CDSE_USER=your_email@example.com
-   CDSE_PASSWORD=your_password
-   ```
+```bash
+export CDSE_USER="your_email@example.com"
+export CDSE_PASSWORD="your_password"
+```
 
-   Alternative variable names (also supported):
-   ```bash
-   export COPERNICUS_USER="your_email@example.com"
-   export COPERNICUS_PASSWORD="your_password"
-   ```
+Or create a `.env` file in the project root:
+```
+CDSE_USER=your_email@example.com
+CDSE_PASSWORD=your_password
+```
 
-## Creating Your Own Examples
+Alternative variable names (also supported):
+```bash
+export COPERNICUS_USER="your_email@example.com"
+export COPERNICUS_PASSWORD="your_password"
+```
+
+### 3. Run Example
+
+```bash
+uv run python examples/basic.py
+```
+
+---
+
+## Creating Your Own Scripts
+
+### Basic Pattern
 
 ```python
-from sen2p import download
+from sen2p.cdse_downloader import CDSEDownloader
 
-# Download imagery
-results = download(
+# Initialize downloader
+downloader = CDSEDownloader()
+
+# Search for products
+products = downloader.search(
+    location=(172.1, -43.5),  # (longitude, latitude)
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],  # [longitude, latitude]
-    output_dir="data",
     cloud_max=20,
+    producttype="MSIL2A",  # Level-2A (atmospherically corrected)
+)
+
+print(f"Found {len(products)} products")
+
+# Download
+results = downloader.download_products(
+    products,
+    output_dir="data",
+    max_products=3,  # Download 3 best matches
 )
 
 # Use the results
@@ -84,85 +107,166 @@ for result in results:
     print(f"Clouds: {result['cloud_cover']}%")
 ```
 
+---
+
 ## Common Patterns
 
 ### Pattern 1: Time Series
+
 ```python
-# Download monthly imagery
-import datetime
+from sen2p.cdse_downloader import CDSEDownloader
 
-start = datetime.date(2024, 1, 1)
-end = datetime.date(2024, 12, 31)
+downloader = CDSEDownloader()
 
-results = download(
-    start_date=start.isoformat(),
-    end_date=end.isoformat(),
-    location=[172.1, -43.5],
-    output_dir="timeseries",
+# Download imagery across a year
+products = downloader.search(
+    location=(172.1, -43.5),
+    start_date="2024-01-01",
+    end_date="2024-12-31",
     cloud_max=15,
+)
+
+results = downloader.download_products(
+    products,
+    output_dir="timeseries",
+    max_products=12,  # One per month
 )
 ```
 
 ### Pattern 2: Multiple Locations
+
 ```python
+from sen2p.cdse_downloader import CDSEDownloader
+
+downloader = CDSEDownloader()
+
 locations = {
-    "christchurch": [172.1, -43.5],
-    "wellington": [174.8, -41.3],
+    "christchurch": (172.1, -43.5),
+    "wellington": (174.8, -41.3),
 }
 
 for name, coords in locations.items():
-    results = download(
+    products = downloader.search(
+        location=coords,
         start_date="2024-01-01",
         end_date="2024-01-31",
-        location=coords,
-        output_dir=f"data/{name}",
         cloud_max=20,
     )
+    
+    results = downloader.download_products(
+        products,
+        output_dir=f"data/{name}",
+        max_products=3,
+    )
+    
+    print(f"{name}: Downloaded {len(results)} products")
 ```
 
-### Pattern 3: With rasteric
+### Pattern 3: With rasteric Processing
+
 ```python
-from sen2p import download
-from rasteric import raster
+from sen2p.cdse_downloader import CDSEDownloader
+# from rasteric import raster  # Uncomment when rasteric is available
+
+downloader = CDSEDownloader()
 
 # Download
-results = download(
+products = downloader.search(
+    location=(172.1, -43.5),
     start_date="2024-06-01",
     end_date="2024-06-30",
-    location=[172.1, -43.5],
-    output_dir="data",
     cloud_max=20,
 )
 
-# Process each scene
-for result in results:
-    raster.ndvi(result["path"], f"ndvi_{result['id']}.tif", red_band=4, nir_band=8)
+results = downloader.download_products(products, max_products=5)
+
+# Process each scene (pseudo-code)
+# for result in results:
+#     raster.ndvi(
+#         result["path"],
+#         f"ndvi_{result['id']}.tif",
+#         red_band=4,  # Red
+#         nir_band=8   # NIR
+#     )
 ```
+
+### Pattern 4: Different Product Types
+
+```python
+from sen2p.cdse_downloader import CDSEDownloader
+
+downloader = CDSEDownloader()
+
+# Level-2A (atmospherically corrected) - Recommended
+products_l2a = downloader.search(
+    location=(172.1, -43.5),
+    start_date="2024-01-01",
+    end_date="2024-01-31",
+    producttype="MSIL2A",  # Default
+)
+
+# Level-1C (top-of-atmosphere)
+products_l1c = downloader.search(
+    location=(172.1, -43.5),
+    start_date="2024-01-01",
+    end_date="2024-01-31",
+    producttype="MSIL1C",
+)
+```
+
+---
+
+## Product Types
+
+### ✅ Correct (CDSE Format)
+- `MSIL2A` - Level-2A (atmospherically corrected) - **Recommended**
+- `MSIL1C` - Level-1C (top-of-atmosphere)
+
+### ❌ Wrong (Old Format - Don't Use)
+- `S2MSI2A` - Not recognized by CDSE
+- `S2MSI1C` - Not recognized by CDSE
+
+---
 
 ## Need More Help?
 
 - **Documentation:** See `../docs/` directory
 - **Quick Start:** `../docs/QUICKSTART.md`
-- **Integration Guide:** `../docs/INTEGRATION.md`
+- **CDSE Implementation:** `../CDSE_STATUS.md`
+- **API Reference:** `../README.md`
 - **FAQ:** `../docs/FAQ.md`
+
+---
 
 ## Troubleshooting
 
-**"No products found"**
-- Expand date range
-- Increase `cloud_max`
-- Verify coordinates
+### "Invalid credentials"
+- Verify you've registered at https://dataspace.copernicus.eu
+- Check your email is verified
+- Ensure environment variables are set:
+  ```bash
+  echo $CDSE_USER
+  echo $CDSE_PASSWORD
+  ```
 
-**"Invalid credentials"**
-- Check username/password
-- Confirm email
-- Check environment variables
+### "No products found"
+- Expand the date range
+- Increase `cloud_max` parameter (try 50 or 100)
+- Verify coordinates are (longitude, latitude) not (latitude, longitude)
+- Check if the location has Sentinel-2 coverage
 
-**"Download failed"**
+### "Download failed"
 - Check internet connection
-- Verify Copernicus Hub is online
-- Try again later (rate limits)
+- Verify disk space available
+- Token may have expired - script will retry automatically
+- Try reducing `max_products` to test
+
+### "Import error: No module named 'sen2p'"
+- Ensure sen2p is installed: `uv add sen2p`
+- Check you're in the correct virtual environment
 
 ---
 
 Happy downloading! 🛰️
+
+**Note:** Use `CDSEDownloader` for reliable downloads with the native CDSE API.

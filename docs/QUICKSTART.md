@@ -38,14 +38,26 @@ export COPERNICUS_PASSWORD="your_password"
 ## 3. Download Your First Image
 
 ```python
-from sen2p import download
+from sen2p.cdse_downloader import CDSEDownloader
 
-results = download(
+# Initialize downloader (loads credentials from environment)
+downloader = CDSEDownloader()
+
+# Search for products
+products = downloader.search(
+    location=(172.1, -43.5),  # (longitude, latitude)
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],  # [longitude, latitude]
-    output_dir="data",
     cloud_max=20,
+)
+
+print(f"Found {len(products)} products")
+
+# Download products
+results = downloader.download_products(
+    products,
+    output_dir="data",
+    max_products=3,  # Download 3 best matches
 )
 
 print(f"Downloaded {len(results)} images")

@@ -4,26 +4,27 @@ Lightweight Python library for downloading Sentinel-2 satellite imagery.
 
 ## Overview
 
-`sen2p` focuses exclusively on downloading Sentinel-2 imagery from the Copernicus Open Access Hub. It provides a clean, simple API for searching and downloading satellite data with cloud filtering.
+`sen2p` focuses exclusively on downloading Sentinel-2 imagery from the Copernicus Data Space Ecosystem (CDSE). It provides a clean, native API implementation for searching and downloading satellite data with cloud filtering.
 
 **The Companion:** `rasteric` focuses on processing and analysis. Together they create a lightweight workflow for satellite imagery:
 
 ```python
-from sen2p import download
+from sen2p.cdse_downloader import CDSEDownloader
 from rasteric import raster
 
 # Download imagery
-results = download(
+downloader = CDSEDownloader()
+products = downloader.search(
+    location=(172.1, -43.5),
     start_date="2023-06-01",
     end_date="2023-06-30",
-    location=[172.1, -43.5],
-    bands=["red", "nir"],
-    output_dir="data",
     cloud_max=20,
+    producttype="MSIL2A",
 )
+results = downloader.download_products(products, output_dir="data", max_products=3)
 
 # Process with rasteric
-raster.ndvi(results[0]["path"], "ndvi.tif", red_band=1, nir_band=2)
+raster.ndvi(results[0]["path"], "ndvi.tif", red_band=4, nir_band=8)
 ```
 
 Two libraries. Clean separation. Full workflow.
@@ -71,21 +72,34 @@ export COPERNICUS_USER="your_email@example.com"
 export COPERNICUS_PASSWORD="your_password"
 ```
 
-Or pass them directly to the `download()` function.
+sen2p uses **native CDSE API** with OAuth2 authentication - credentials are loaded automatically from environment variables.
 
 ## Usage
 
 ### Basic Download
 
 ```python
-from sen2p import download
+from sen2p.cdse_downloader import CDSEDownloader
 
-results = download(
+# Initialize downloader (credentials loaded from environment)
+downloader = CDSEDownloader()
+
+# Search for products
+products = downloader.search(
+    location=(172.1, -43.5),  # (longitude, latitude)
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],  # [longitude, latitude]
-    output_dir="sentinel_data",
     cloud_max=20,  # Max 20% cloud coverage
+    producttype="MSIL2A",  # Level-2A (atmospherically corrected)
+)
+
+print(f"Found {len(products)} products")
+
+# Download products
+results = downloader.download_products(
+    products,
+    output_dir="sentinel_data",
+    max_products=3,  # Download only 3 best matches
 )
 
 print(f"Downloaded {len(results)} products")
@@ -93,88 +107,151 @@ for r in results:
     print(f"  {r['title']} - {r['cloud_cover']}% clouds")
 ```
 
-### With Credentials
+### With Explicit Credentials
 
 ```python
-results = download(
+from sen2p.cdse_downloader import CDSEDownloader
+
+downloader = CDSEDownloader(username="your_email@example.com", password="your_password")
+
+products = downloader.search(
+    location=(172.1, -43.5),
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],
-    output_dir="data",
-    username="your_username",
-    password="your_password",
+    cloud_max=20,
 )
-```
 
-### Limit Downloads
-
-```python
-# Download only the 3 best matches
-results = download(
-    start_date="2024-01-01",
-    end_date="2024-12-31",
-    location=[172.1, -43.5],
-    output_dir="data",
-    cloud_max=10,
-    max_products=3,
-)
+results = downloader.download_products(products, output_dir="data")
 ```
 
 ### Choose Product Type
 
 ```python
-# Level-2A (atmospherically corrected)
-results = download(
+# Level-2A (atmospherically corrected) - Recommended
+products = downloader.search(
+    location=(172.1, -43.5),
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],
-    output_dir="data",
-    producttype="S2MSI2A",  # Default
+    producttype="MSIL2A",  # Default
 )
 
 # Level-1C (top-of-atmosphere)
-results = download(
+products = downloader.search(
+    location=(172.1, -43.5),
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],
-    output_dir="data",
-    producttype="S2MSI1C",
+    producttype="MSIL1C",
 )
 ```
 
 ## API Reference
 
-### `download()`
+### `CDSEDownloader`
 
-Main function for downloading Sentinel-2 imagery.
+Native implementation for Copernicus Data Space Ecosystem API.
+
+#### `__init__(username=None, password=None)`
+
+Initialize the downloader.
 
 **Parameters:**
-- `start_date` (str): Start date in format "YYYY-MM-DD"
-- `end_date` (str): End date in format "YYYY-MM-DD"
-- `location` (list or tuple): [longitude, latitude]
-- `bands` (list, optional): Band names for reference (extraction done in processing)
-- `output_dir` (str): Directory to save files (default: "data")
+- `username` (str, optional): CDSE email (or set CDSE_USER/COPERNICUS_USER env var)
+- `password` (str, optional): CDSE password (or set CDSE_PASSWORD/COPERNICUS_PASSWORD env var)
+
+**Example:**
+```python
+# From environment variables
+downloader = CDSEDownloader()
+
+# Explicit credentials
+downloader = CDSEDownloader(username="email@example.com", password="pass")
+```
+
+#### `search(location, start_date, end_date, cloud_max=30, collection="SENTINEL-2", producttype="MSIL2A")`
+
+Search for Sentinel-2 products.
+
+**Parameters:**
+- `location` (tuple): (longitude, latitude)
+- `start_date` (str): Start date "YYYY-MM-DD"
+- `end_date` (str): End date "YYYY-MM-DD"
 - `cloud_max` (int): Maximum cloud coverage 0-100% (default: 30)
-- `max_products` (int, optional): Limit number of downloads
-- `username` (str, optional): Copernicus username
-- `password` (str, optional): Copernicus password
-- `producttype` (str): "S2MSI2A" (Level-2A, default) or "S2MSI1C" (Level-1C)
+- `collection` (str): Collection name (default: "SENTINEL-2")
+- `producttype` (str): "MSIL2A" (Level-2A, default) or "MSIL1C" (Level-1C)
 
 **Returns:**
-List of dictionaries with:
+List of product dictionaries with:
+- `id`: Product ID (UUID)
+- `name`: Product name
+- `size`: File size in bytes
+- `cloud_cover`: Cloud coverage percentage
+- `date`: Acquisition date (ISO 8601)
+- `download_url`: Download URL (internal use)
+
+**Example:**
+```python
+products = downloader.search(
+    location=(172.1, -43.5),
+    start_date="2024-01-01",
+    end_date="2024-01-31",
+    cloud_max=20,
+    producttype="MSIL2A",
+)
+```
+
+#### `download_products(products, output_dir="data", max_products=None)`
+
+Download multiple products.
+
+**Parameters:**
+- `products` (list): List of products from search()
+- `output_dir` (str): Directory to save files (default: "data")
+- `max_products` (int, optional): Maximum number to download (downloads all if None)
+
+**Returns:**
+List of download results with:
 - `id`: Product ID
 - `title`: Product title
 - `path`: Path to downloaded file
 - `size`: File size
 - `cloud_cover`: Cloud coverage percentage
 - `date`: Acquisition date
-- `requested_bands`: Band names (for reference)
+
+**Example:**
+```python
+results = downloader.download_products(
+    products,
+    output_dir="sentinel_data",
+    max_products=3,
+)
+```
+
+#### `download_product(product_id, output_dir="data")`
+
+Download a single product by ID.
+
+**Parameters:**
+- `product_id` (str): Product UUID from search results
+- `output_dir` (str): Directory to save the file
+
+**Returns:**
+Dictionary with download information.
+
+**Example:**
+```python
+result = downloader.download_product(
+    "82fa3297-4865-4e9b-b532-29686b51bf4d",
+    output_dir="data",
+)
+```
 
 ## Design Philosophy
 
+**Native CDSE Implementation:** Direct OAuth2 and OData API integration for reliable downloads without third-party dependencies.
+
 **Single Responsibility:** `sen2p` only downloads. Processing, band extraction, mosaicking, and analysis are handled by `rasteric`.
 
-**Simple API:** One main function with sensible defaults.
+**Simple API:** Clean class-based interface with sensible defaults.
 
 **Clean Integration:** Output format designed to work seamlessly with `rasteric`.
 
@@ -201,5 +278,6 @@ sen2p/
 
 - **Documentation:** [docs/](docs/)
 - **Examples:** [examples/](examples/)
-- **Copernicus Hub:** https://scihub.copernicus.eu/
+- **Copernicus Data Space:** https://dataspace.copernicus.eu/
+- **CDSE Documentation:** https://documentation.dataspace.copernicus.eu/
 - **Sentinel-2:** https://sentinels.copernicus.eu/web/sentinel/missions/sentinel-2

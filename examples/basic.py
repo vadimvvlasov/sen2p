@@ -1,17 +1,31 @@
 """
-Example usage of sen2p for downloading Sentinel-2 imagery
+Example usage of sen2p for downloading Sentinel-2 imagery using native CDSE API
 """
 
-from sen2p import download
+from sen2p.cdse_downloader import CDSEDownloader
 
 # Example 1: Basic download
-print("Example 1: Basic download")
-results = download(
+print("Example 1: Basic download with CDSEDownloader")
+print("=" * 60)
+
+# Initialize downloader (loads credentials from environment variables)
+downloader = CDSEDownloader()
+
+# Search for products
+products = downloader.search(
+    location=(172.1, -43.5),  # Christchurch, New Zealand (longitude, latitude)
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],  # Christchurch, New Zealand
-    output_dir="sentinel_data",
     cloud_max=20,
+    producttype="MSIL2A",  # Level-2A (atmospherically corrected)
+)
+
+print(f"Found {len(products)} products")
+
+# Download products
+results = downloader.download_products(
+    products,
+    output_dir="sentinel_data",
     max_products=1,  # Just download one for testing
 )
 
@@ -25,33 +39,50 @@ for r in results:
 
 
 # Example 2: Download with explicit credentials
-# results = download(
+print("\nExample 2: Using explicit credentials")
+print("=" * 60)
+
+# downloader = CDSEDownloader(
+#     username="your_email@example.com",
+#     password="your_password"
+# )
+#
+# products = downloader.search(
+#     location=(172.1, -43.5),
 #     start_date="2024-01-01",
 #     end_date="2024-01-31",
-#     location=[172.1, -43.5],
-#     output_dir="data",
-#     username="your_username",
-#     password="your_password",
-#     cloud_max=10
+#     cloud_max=10,
+#     producttype="MSIL2A",
 # )
+#
+# results = downloader.download_products(products, max_products=3)
 
 
 # Example 3: Integration with rasteric (pseudo-code)
-# from rasteric import raster
-#
-# results = download(
-#     start_date="2023-06-01",
-#     end_date="2023-06-30",
-#     location=[172.1, -43.5],
-#     bands=["red", "nir"],
-#     output_dir="data",
-#     cloud_max=20
-# )
-#
-# # Calculate NDVI from downloaded imagery
-# raster.ndvi(
-#     results[0]["path"],
-#     "ndvi.tif",
-#     red_band=4,  # Band 4 is Red in Sentinel-2
-#     nir_band=8   # Band 8 is NIR in Sentinel-2
-# )
+print("\nExample 3: Integration with rasteric")
+print("=" * 60)
+print("""
+# After downloading with sen2p, process with rasteric:
+
+from rasteric import raster
+from sen2p.cdse_downloader import CDSEDownloader
+
+# Download
+downloader = CDSEDownloader()
+products = downloader.search(
+    location=(172.1, -43.5),
+    start_date="2023-06-01",
+    end_date="2023-06-30",
+    cloud_max=20,
+    producttype="MSIL2A",
+)
+results = downloader.download_products(products, max_products=1)
+
+# Calculate NDVI from downloaded imagery
+raster.ndvi(
+    results[0]["path"],
+    "ndvi.tif",
+    red_band=4,  # Band 4 is Red in Sentinel-2
+    nir_band=8   # Band 8 is NIR in Sentinel-2
+)
+""")

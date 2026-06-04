@@ -1,5 +1,5 @@
 """
-Скачивание Sentinel-2 через нативный CDSE API
+Download Sentinel-2 imagery using native CDSE API
 """
 
 import os
@@ -8,9 +8,9 @@ from pathlib import Path
 from sen2p.cdse_downloader import CDSEDownloader
 
 
-# Загрузка credentials из .env файла
+# Load credentials from .env file
 def load_env():
-    """Загружает переменные из .env файла"""
+    """Load variables from .env file"""
     env_path = Path(__file__).parent / ".env"
     if env_path.exists():
         with open(env_path) as f:
@@ -21,40 +21,40 @@ def load_env():
                     os.environ[key.strip()] = value.strip()
 
 
-# Загружаем .env
+# Load .env
 load_env()
 
-# Параметры
-LOCATION = [-51.2, -30.0]  # Порту-Алегри, Рио-Гранде-ду-Сул, Бразилия
-START_DATE = "2023-06-01"  # Расширяем период
+# Parameters
+LOCATION = [-51.2, -30.0]  # Porto Alegre, Rio Grande do Sul, Brazil
+START_DATE = "2023-06-01"  # Extended period
 END_DATE = "2023-12-31"
-CLOUD_MAX = 50  # Увеличиваем допустимую облачность
+CLOUD_MAX = 50  # Increased acceptable cloud coverage
 MAX_PRODUCTS = 3
 OUTPUT_DIR = "sentinel_data_cdse"
 
 print("=" * 70)
-print("Скачивание Sentinel-2 через CDSE API")
+print("Downloading Sentinel-2 via CDSE API")
 print("=" * 70)
 print()
-print(f"Локация: {LOCATION}")
-print(f"Период: {START_DATE} - {END_DATE}")
-print(f"Макс. облачность: {CLOUD_MAX}%")
-print(f"Количество: {MAX_PRODUCTS} лучших")
+print(f"Location: {LOCATION}")
+print(f"Period: {START_DATE} - {END_DATE}")
+print(f"Max cloud coverage: {CLOUD_MAX}%")
+print(f"Quantity: {MAX_PRODUCTS} best matches")
 print()
 
 try:
-    # Создаём downloader
+    # Create downloader
     downloader = CDSEDownloader()
-    print("✓ Credentials загружены")
+    print("✓ Credentials loaded")
 
-    # Получаем access token
-    print("Получение access token...")
+    # Get access token
+    print("Getting access token...")
     downloader.get_access_token()
-    print("✓ Access token получен")
+    print("✓ Access token obtained")
     print()
 
-    # Поиск продуктов
-    print("Поиск снимков...")
+    # Search for products
+    print("Searching for imagery...")
     products = downloader.search(
         location=tuple(LOCATION),
         start_date=START_DATE,
@@ -64,20 +64,20 @@ try:
         producttype="MSIL2A",
     )
 
-    print(f"✓ Найдено: {len(products)} снимков")
+    print(f"✓ Found: {len(products)} images")
     print()
 
     if products:
-        # Показываем первые несколько
-        print(f"Топ {min(MAX_PRODUCTS, len(products))} снимков:")
+        # Show first few
+        print(f"Top {min(MAX_PRODUCTS, len(products))} images:")
         for i, p in enumerate(products[:MAX_PRODUCTS], 1):
             print(f"  {i}. {p['name']}")
-            print(f"     Облачность: {p['cloud_cover']:.1f}%")
-            print(f"     Дата: {p['date']}")
+            print(f"     Cloud coverage: {p['cloud_cover']:.1f}%")
+            print(f"     Date: {p['date']}")
         print()
 
-        # Скачиваем
-        print(f"Начинаем скачивание в {OUTPUT_DIR}/...")
+        # Download
+        print(f"Starting download to {OUTPUT_DIR}/...")
         print()
 
         results = downloader.download_products(
@@ -86,69 +86,69 @@ try:
 
         print()
         print("=" * 70)
-        print(f"✓ Успешно скачано: {len(results)} снимк(ов)")
+        print(f"✓ Successfully downloaded: {len(results)} image(s)")
         print("=" * 70)
         print()
 
         for i, r in enumerate(results, 1):
-            print(f"Снимок #{i}:")
-            print(f"  Название: {r['title']}")
-            print(f"  Облачность: {r['cloud_cover']:.1f}%")
-            print(f"  Дата: {r['date']}")
-            print(f"  Путь: {r['path']}")
+            print(f"Image #{i}:")
+            print(f"  Name: {r['title']}")
+            print(f"  Cloud coverage: {r['cloud_cover']:.1f}%")
+            print(f"  Date: {r['date']}")
+            print(f"  Path: {r['path']}")
             print()
 
-        print("Следующие шаги:")
-        print("  • Распакуйте .zip файлы")
-        print("  • Обработайте с помощью rasteric")
-        print("  • Вычислите NDVI или другие индексы")
+        print("Next steps:")
+        print("  • Unzip the .zip files")
+        print("  • Process with rasteric")
+        print("  • Calculate NDVI or other indices")
 
     else:
         print("=" * 70)
-        print("✗ Снимки не найдены")
+        print("✗ No images found")
         print("=" * 70)
         print()
-        print("Попробуйте:")
-        print("  • Увеличить период")
-        print("  • Увеличить cloud_max")
-        print("  • Проверить координаты")
+        print("Try:")
+        print("  • Expand the date range")
+        print("  • Increase cloud_max")
+        print("  • Check coordinates")
 
 except ValueError as e:
     print("=" * 70)
-    print("✗ Ошибка конфигурации")
+    print("✗ Configuration error")
     print("=" * 70)
     print()
     print(str(e))
     print()
-    print("Зарегистрируйтесь на: https://dataspace.copernicus.eu")
+    print("Register at: https://dataspace.copernicus.eu")
     print()
-    print("Затем установите:")
-    print("  export CDSE_USER='ваш_email@example.com'")
-    print("  export CDSE_PASSWORD='ваш_пароль'")
+    print("Then set:")
+    print("  export CDSE_USER='your_email@example.com'")
+    print("  export CDSE_PASSWORD='your_password'")
 
 except RuntimeError as e:
     print("=" * 70)
-    print("✗ Ошибка выполнения")
+    print("✗ Runtime error")
     print("=" * 70)
     print()
-    print(f"Детали: {e}")
+    print(f"Details: {e}")
     print()
-    print("Возможные причины:")
-    print("  • Неверные credentials")
-    print("  • Проблемы с сетью")
-    print("  • Сервер временно недоступен")
+    print("Possible causes:")
+    print("  • Invalid credentials")
+    print("  • Network issues")
+    print("  • Server temporarily unavailable")
 
 except Exception as e:
     print("=" * 70)
-    print("✗ Неожиданная ошибка")
+    print("✗ Unexpected error")
     print("=" * 70)
     print()
-    print(f"Ошибка: {e}")
+    print(f"Error: {e}")
     print()
-    print("Если проблема повторяется:")
-    print("  • Проверьте интернет-соединение")
-    print("  • Проверьте credentials")
-    print("  • Посмотрите документацию")
+    print("If the problem persists:")
+    print("  • Check internet connection")
+    print("  • Verify credentials")
+    print("  • Review documentation")
 
 print()
 print("=" * 70)

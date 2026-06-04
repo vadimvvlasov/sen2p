@@ -4,7 +4,7 @@
 
 ### What is sen2p?
 
-sen2p is a lightweight Python library for downloading Sentinel-2 satellite imagery from the Copernicus Open Access Hub. It focuses solely on downloading - processing is handled by its companion library, rasteric.
+sen2p is a lightweight Python library for downloading Sentinel-2 satellite imagery from the Copernicus Data Space Ecosystem (CDSE). It features a native CDSE API implementation with OAuth2 authentication. Processing is handled by its companion library, rasteric.
 
 ### Is sen2p free?
 
@@ -22,10 +22,10 @@ See [MIGRATION_CDSE.md](MIGRATION_CDSE.md) for details.
 
 ### What's the difference between sen2p and sentinelsat?
 
-- **sentinelsat**: Low-level library for Copernicus API
-- **sen2p**: High-level, simple API built on sentinelsat, designed for use with rasteric
+- **sentinelsat**: Low-level library for Copernicus API (may have CDSE compatibility issues)
+- **sen2p**: Native CDSE implementation with OAuth2, designed for use with rasteric
 
-sen2p provides a simpler interface and better integration with rasteric workflows.
+sen2p provides a native CDSE API implementation that works reliably without depending on third-party API libraries.
 
 ## Installation & Setup
 
@@ -57,9 +57,11 @@ export COPERNICUS_USER="your_email@example.com"
 export COPERNICUS_PASSWORD="your_password"
 ```
 
-Or pass them directly to `download()`:
+Or pass them directly to `CDSEDownloader()`:
 ```python
-download(..., username="your_email@example.com", password="pass")
+from sen2p.cdse_downloader import CDSEDownloader
+
+downloader = CDSEDownloader(username="your_email@example.com", password="your_password")
 ```
 
 ### Can I use a .env file?
@@ -86,14 +88,18 @@ results = download(...)  # Will use env vars
 ### How do I download imagery for a location?
 
 ```python
-from sen2p import download
+from sen2p.cdse_downloader import CDSEDownloader
 
-results = download(
+downloader = CDSEDownloader()
+
+products = downloader.search(
+    location=(172.1, -43.5),  # (longitude, latitude)
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],  # [longitude, latitude]
-    output_dir="data",
+    cloud_max=20,
 )
+
+results = downloader.download_products(products, output_dir="data")
 ```
 
 ### No products found - what's wrong?
@@ -117,24 +123,24 @@ Values from 0-100. Lower = fewer clouds = better quality.
 
 ### What's the difference between Level-1C and Level-2A?
 
-- **Level-1C (S2MSI1C)**: Top-of-atmosphere, no atmospheric correction
-- **Level-2A (S2MSI2A)**: Bottom-of-atmosphere, atmospherically corrected ✓ Recommended
+- **Level-1C (MSIL1C)**: Top-of-atmosphere, no atmospheric correction
+- **Level-2A (MSIL2A)**: Bottom-of-atmosphere, atmospherically corrected ✓ Recommended
 
 Use Level-2A unless you need to apply custom atmospheric correction.
 
 ```python
 # Level-2A (default, recommended)
-results = download(..., producttype="S2MSI2A")
+products = downloader.search(..., producttype="MSIL2A")
 
 # Level-1C
-results = download(..., producttype="S2MSI1C")
+products = downloader.search(..., producttype="MSIL1C")
 ```
 
 ### How do I limit downloads?
 
 ```python
-results = download(
-    ...,
+results = downloader.download_products(
+    products,
     max_products=3,  # Download only 3 best matches
 )
 ```
@@ -166,17 +172,24 @@ raster.extract_bands(
 ### How do I calculate NDVI?
 
 ```python
-from sen2p import download
-from rasteric import raster
+from sen2p.cdse_downloader import CDSEDownloader
+# from rasteric import raster  # Uncomment when available
 
-results = download(...)
-
-raster.ndvi(
-    results[0]["path"],
-    "ndvi.tif",
-    red_band=4,  # Band 4 = Red
-    nir_band=8,  # Band 8 = NIR
+downloader = CDSEDownloader()
+products = downloader.search(
+    location=(172.1, -43.5),
+    start_date="2024-01-01",
+    end_date="2024-01-31",
+    cloud_max=20,
 )
+results = downloader.download_products(products, max_products=1)
+
+# raster.ndvi(
+#     results[0]["path"],
+#     "ndvi.tif",
+#     red_band=4,  # Band 4 = Red
+#     nir_band=8,  # Band 8 = NIR
+# )
 ```
 
 ### Which bands should I use?
@@ -193,21 +206,28 @@ See `SENTINEL2_REFERENCE.md` for full details. Most common:
 Yes! That's the intended workflow:
 
 ```python
-from sen2p import download
-from rasteric import raster
+from sen2p.cdse_downloader import CDSEDownloader
+# from rasteric import raster  # Uncomment when available
+
+downloader = CDSEDownloader()
 
 # Download
-results = download(
+products = downloader.search(
+    location=(172.1, -43.5),
     start_date="2024-01-01",
     end_date="2024-01-31",
-    location=[172.1, -43.5],
-    output_dir="data",
     cloud_max=20,
 )
+results = downloader.download_products(products, max_products=3)
 
-# Process immediately
-for result in results:
-    raster.ndvi(result["path"], f"ndvi_{result['id']}.tif", red_band=4, nir_band=8)
+# Process immediately (pseudo-code)
+# for result in results:
+#     raster.ndvi(
+#         result["path"],
+#         f"ndvi_{result['id']}.tif",
+#         red_band=4,
+#         nir_band=8
+#     )
 ```
 
 ## Errors & Troubleshooting
