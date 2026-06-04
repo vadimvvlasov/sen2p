@@ -16,6 +16,7 @@ env/
 
 # Downloaded Sentinel data
 sentinel_data/
+sentinel_data_cdse/
 data/
 *.SAFE/
 
